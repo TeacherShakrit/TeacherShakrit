@@ -183,13 +183,13 @@
                 max_tokens: 1000
             };
 
-            const response = await fetch(API_ENDPOINT, {
+            const response = await fetchawait fetch('https://api.deepseek.com/v1/chat/completions', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEY}`
+                    "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
                 },
-                body: JSON.stringify(requestData)
+                body: JSON.stringify(req.body)
             });
 
             if (!response.ok) {
@@ -197,7 +197,7 @@
             }
 
             const data = await response.json();
-            return data.choices[0].message.content;
+            res.status(200).json(data);
         }
 
         // ข้อความต้อนรับเริ่มต้น
@@ -228,6 +228,12 @@
             // เรียกใช้ DeepSeek API
             await callDeepSeekAPI(userMessage);
         }
+# เมื่อแก้ไขโค้ดแล้ว
+git add .
+git commit -m "อธิบายการเปลี่ยนแปลง"
+git push origin main
+// ในไฟล์ .env (เพิ่มใน .gitignore)
+DEEPSEEK_API_KEY=sk-147d05a12d2942a48624b4e3490e26b5
     </script>
 </body>
 </html>
