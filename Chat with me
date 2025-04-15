@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ห้องเรียนครูชาคริต</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Kanit', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        #chat-container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        #chat-header {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        #chat-messages {
+            height: 400px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        #user-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #eee;
+        }
+        #user-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        #user-input button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .bot-message {
+            background: #e3f2fd;
+            align-self: flex-start;
+        }
+        .user-message {
+            background: #4CAF50;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .typing-indicator {
+            display: inline-block;
+            padding: 10px;
+        }
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #888;
+            margin-right: 3px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">ห้องเรียนครูชาคริต (Powered by DeepSeek)</div>
+        <div id="chat-messages"></div>
+        <div id="user-input">
+            <input type="text" id="user-input-field" placeholder="พิมพ์คำถามที่นี่..." autocomplete="off">
+            <button id="send-button">ส่ง</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInputField = document.getElementById('user-input-field');
+        const sendButton = document.getElementById('send-button');
+
+        // ข้อความเริ่มต้นจากครูชาคริต
+        function addBotMessage(text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', 'bot-message');
+    messageDiv.innerHTML = marked.parse(text); // ใช้ marked.js สำหรับ Markdown
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+        // แสดงตัวกำลังพิมพ์
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'bot-message', 'typing-indicator');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ซ่อนตัวกำลังพิมพ์
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // เรียกใช้งาน DeepSeek API จริง
+        async function callDeepSeekAPI(userMessage) {
+            try {
+                showTypingIndicator();
+                
+                // เรียกใช้ DeepSeek API จริง
+                const response = await fetchDeepSeekAPI(userMessage);
+                
+                hideTypingIndicator();
+                addBotMessage(response);
+            } catch (error) {
+                hideTypingIndicator();
+                addBotMessage("ขออภัย มีปัญหากับระบบตอบคำถามในขณะนี้");
+                console.error("Error calling DeepSeek API:", error);
+            }
+        }
+
+        // ฟังก์ชันสำหรับเรียก DeepSeek API จริง
+        async function fetchDeepSeekAPI(userMessage) {
+            // ตั้งค่า API endpoint และ API key ของคุณที่นี่
+            const API_ENDPOINT = "https://api.deepseek.com/v1/chat/completions"; // ตัวอย่าง endpoint
+            const API_KEY = "sk-147d05a12d2942a48624b4e3490e26b5"; // ใส่ API key ของคุณที่นี่
+            
+            // ข้อมูลที่จะส่งไปยัง API
+            const requestData = {
+                model: "deepseek-chat", // หรือรุ่นอื่นที่คุณใช้
+                messages: [
+                    {
+                        role: "system",
+                        content: "ครูชาคริตคือผู้สอนวิชาภาษาอังกฤษ ผู้ใจดีและพร้อมช่วยเหลือนักเรียนทุกคน ตอบคำถามและพร้อมให้คำแนะนำทุกคน"
+                    },
+                    {
+                        role: "user",
+                        content: userMessage
+                    }
+                ],
+                temperature: 0-2,
+                max_tokens: 1000
+            };
+
+            const response = await fetch(API_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // ข้อความต้อนรับเริ่มต้น
+        addBotMessage("สวัสดีนักเรียนทุกคน ยินดีต้อนรับสู่ห้องเรียนครูชาคริต");
+        addBotMessage("Greetings, students! A warm welcome to Teacher Shakrit's class.");
+        addBotMessage("มีอะไรจะถามครูชาคริตไหมครับ");
+
+        // การส่งข้อความ
+        sendButton.addEventListener('click', sendMessage);
+        userInputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const userMessage = userInputField.value.trim();
+            if (userMessage === '') return;
+            
+            // แสดงข้อความผู้ใช้
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.classList.add('message', 'user-message');
+            userMessageDiv.textContent = userMessage;
+            chatMessages.appendChild(userMessageDiv);
+            userInputField.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // เรียกใช้ DeepSeek API
+            await callDeepSeekAPI(userMessage);
+        }
+    </script>
+</body>
+</html>
